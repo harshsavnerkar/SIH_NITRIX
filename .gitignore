@@ -1,0 +1,16 @@
+# Exclude heavy dataset directory
+Data_updated/
+
+# Binary array files
+*.npy
+*.npz
+*.parquet
+*.joblib
+*.zip
+
+# Python temporary files
+__pycache__/
+*.pyc
+.DS_Store
+.idea/
+.vscode/
