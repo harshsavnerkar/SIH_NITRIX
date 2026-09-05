@@ -391,10 +391,11 @@ function updateAblationMetrics() {
         baselineElement.textContent = formatMetric(scenario.baseline_ins_open_loop?.drift_percent);
     }
     
-    // UKF PHYSICS FILTER
+    // UKF PHYSICS FILTER (UKF + NHC + ZUPT)
     const ukfElement = document.getElementById("ukfDrift");
     if (ukfElement) {
-        ukfElement.textContent = formatMetric(scenario.final_system?.drift_percent);
+        const ukfVal = scenario.ukf_full_snapped?.drift_percent ?? scenario.final_system?.drift_percent;
+        ukfElement.textContent = formatMetric(ukfVal);
     }
 
     // FINAL PYTORCH LSTM SYSTEM
