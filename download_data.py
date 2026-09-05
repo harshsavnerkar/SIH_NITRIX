@@ -1,42 +1,37 @@
 import os
-import sys
+import zipfile
+import urllib.request
 
-try:
-    from huggingface_hub import snapshot_download
-except ImportError:
-    print("Installing huggingface_hub package...")
-    os.system(f"{sys.executable} -m pip install huggingface_hub")
-    from huggingface_hub import snapshot_download
+RELEASE_ZIP_URL = "https://github.com/harshsavnerkar/SIH_NITRIX/releases/download/v1.0.0/Data_updated.zip"
 
-# Default repository link (Replace with your actual HuggingFace dataset repo_id)
-DATASET_REPO_ID = "YOUR_USERNAME/nitrix-dataset"
-
-def download():
+def download_and_extract():
     print("=========================================================")
     print("      NITRIX — DATASET AUTOMATIC DOWNLOADER             ")
     print("=========================================================\n")
 
-    repo_id = DATASET_REPO_ID
-    if "YOUR_USERNAME" in repo_id:
-        custom_repo = input("Enter your Hugging Face dataset ID (e.g., username/nitrix-dataset): ").strip()
-        if custom_repo:
-            repo_id = custom_repo
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    zip_path = os.path.join(base_dir, "Data_updated.zip")
+    target_dir = os.path.join(base_dir, "Data_updated")
 
-    target_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "Data_updated")
-    print(f"Downloading dataset from HuggingFace ({repo_id}) into:\n -> {target_dir}\n")
+    if not os.path.exists(zip_path):
+        print(f"[1/2] Downloading Data_updated.zip from GitHub Release...")
+        print(f"URL: {RELEASE_ZIP_URL}\n")
+        try:
+            urllib.request.urlretrieve(RELEASE_ZIP_URL, zip_path)
+            print("✓ Download complete!")
+        except Exception as e:
+            print(f"❌ Download failed: {e}")
+            return
 
+    print(f"\n[2/2] Extracting dataset into: {target_dir}...")
     try:
-        snapshot_download(
-            repo_id=repo_id,
-            repo_type="dataset",
-            local_dir=os.path.dirname(target_dir),
-            local_dir_use_symlinks=False
-        )
+        with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+            zip_ref.extractall(target_dir)
         print("\n=========================================================")
-        print("🎉 SUCCESS! Dataset downloaded and ready at Data_updated/")
+        print("🎉 SUCCESS! Dataset extracted and ready at Data_updated/")
         print("=========================================================")
     except Exception as e:
-        print(f"\n❌ Download failed: {e}")
+        print(f"❌ Extraction failed: {e}")
 
 if __name__ == "__main__":
-    download()
+    download_and_extract()
