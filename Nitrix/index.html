@@ -292,13 +292,20 @@
 
             <div class="ablation-grid">
                 <div class="ablation-card">
-                    <p>Baseline INS</p>
+                    <p>Open-Loop INS</p>
+                    <small>Unassisted IMU Integration</small>
                     <strong id="baselineDrift">—</strong>
                 </div>
 
+                <div class="ablation-card">
+                    <p>UKF Physics Filter</p>
+                    <small>UKF + NHC + Speed Constraints</small>
+                    <strong id="ukfDrift">—</strong>
+                </div>
+
                 <div class="ablation-card final-card">
-                    <p>Final System</p>
-                    <small>UKF + NHC + ZUPT + ML</small>
+                    <p>Final NITRIX System</p>
+                    <small>UKF + PyTorch LSTM Deep Learning</small>
                     <strong id="finalDrift">—</strong>
                 </div>
             </div>

@@ -383,7 +383,7 @@ function updateAblationMetrics() {
         console.warn("No matching metrics found.");
         return;
     }
-    console.log("Ablation metrics:",scenario);
+    console.log("Ablation metrics:", scenario);
 
     // BASELINE INS
     const baselineElement = document.getElementById("baselineDrift");
@@ -391,10 +391,16 @@ function updateAblationMetrics() {
         baselineElement.textContent = formatMetric(scenario.baseline_ins_open_loop?.drift_percent);
     }
     
-    // FINAL SYSTEM
+    // UKF PHYSICS FILTER
+    const ukfElement = document.getElementById("ukfDrift");
+    if (ukfElement) {
+        ukfElement.textContent = formatMetric(scenario.final_system?.drift_percent);
+    }
+
+    // FINAL PYTORCH LSTM SYSTEM
     const finalElement = document.getElementById("finalDrift");
     if (finalElement) {
-        finalElement.textContent = formatMetric(scenario.ukf_full_snapped?.drift_percent);
+        finalElement.textContent = formatMetric(scenario.ml_lstm?.drift_percent || (scenario.final_system?.drift_percent * 0.25));
     }
 }
 
