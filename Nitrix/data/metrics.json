@@ -5,7 +5,7 @@
   "threshold_percent": 10.0
  },
  "dataset": "IO-VNBD Birmingham",
- "ml_active": false,
+ "ml_active": true,
  "scenarios": [
   {
    "scenario": "30_second_outage_sharp_turn",
@@ -57,9 +57,17 @@
     "mae_m": null,
     "max_error_m": null,
     "final_error_m": null,
-    "drift_percent": 59.87, 
+    "drift_percent": 59.87,
     "passes": null,
     "status": "pending \u2014 not yet measured for this scenario"
+   },
+   "ml_lstm": {
+    "label": "PyTorch LSTM Model (NITRIX ML)",
+    "rmse_m": 35.4,
+    "final_error_m": 70.05,
+    "drift_percent": 14.97,
+    "passes": false,
+    "status": "trained & active"
    }
   },
   {
@@ -115,6 +123,14 @@
     "drift_percent": 2.98,
     "passes": true,
     "status": "measured"
+   },
+   "ml_lstm": {
+    "label": "PyTorch LSTM Model (NITRIX ML)",
+    "rmse_m": 3.72,
+    "final_error_m": 2.75,
+    "drift_percent": 0.75,
+    "passes": true,
+    "status": "trained & active"
    }
   },
   {
@@ -170,6 +186,14 @@
     "drift_percent": 2.76,
     "passes": true,
     "status": "measured"
+   },
+   "ml_lstm": {
+    "label": "PyTorch LSTM Model (NITRIX ML)",
+    "rmse_m": 2.01,
+    "final_error_m": 2.44,
+    "drift_percent": 0.69,
+    "passes": true,
+    "status": "trained & active"
    }
   },
   {
@@ -225,7 +249,18 @@
     "drift_percent": 82.7,
     "passes": null,
     "status": "pending \u2014 not yet measured for this scenario"
+   },
+   "ml_lstm": {
+    "label": "PyTorch LSTM Model (NITRIX ML)",
+    "rmse_m": 380.1,
+    "final_error_m": 642.02,
+    "drift_percent": 20.68,
+    "passes": false,
+    "status": "trained & active"
    }
   }
- ]
+ ],
+ "model_architecture": "2-Layer PyTorch LSTM (64 Hidden Units)",
+ "training_samples": 100000,
+ "val_mse": 0.006496
 }

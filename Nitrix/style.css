@@ -534,7 +534,13 @@ button:hover {
 }
 
 .estimate-gnss { background: #58a6ff; }
-.estimate-dr { background: #ff6b6b; }
+.estimate-dr {
+    background-color: #ff6b6b;
+}
+
+.estimate-ml {
+    background-color: #a855f7;
+}
 .ground-truth { background: #3fb950; }
 
 .scenario-control {

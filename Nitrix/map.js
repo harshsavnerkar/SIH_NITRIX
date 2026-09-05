@@ -15,8 +15,11 @@ let hasFittedBounds = false;
 const COLORS = {
     estimateGnss: "#58a6ff",
     estimateDr: "#ff6b6b",
+    estimateMl: "#a855f7",
     groundTruth: "#3fb950"
 };
+
+let estimateMlLine = null;
 
 function initializeMap() {
     if (mapInitialized) return;
@@ -48,6 +51,13 @@ function initializeMap() {
     // Red = navigation estimate during GNSS denial / dead reckoning.
     estimateDrLine = L.polyline([], {
         color: COLORS.estimateDr,
+        weight: 4,
+        opacity: 0.95
+    }).addTo(map);
+
+    // Purple = PyTorch LSTM Model prediction during outage.
+    estimateMlLine = L.polyline([], {
+        color: COLORS.estimateMl,
         weight: 4,
         opacity: 0.95
     }).addTo(map);
@@ -95,6 +105,7 @@ window.updateMap = function(sample, trajectoryData, currentIndex) {
     const gnssPreCoords = [];
     const gnssPostCoords = [];
     const drEstimateCoords = [];
+    const mlEstimateCoords = [];
     const groundTruthCoords = [];
 
     let outageSeen = false;
@@ -126,6 +137,18 @@ window.updateMap = function(sample, trajectoryData, currentIndex) {
         }
 
         if (
+            s.ml_estimate &&
+            s.ml_estimate.latitude != null &&
+            s.ml_estimate.longitude != null &&
+            !s.gnss_available
+        ) {
+            mlEstimateCoords.push([
+                Number(s.ml_estimate.latitude),
+                Number(s.ml_estimate.longitude)
+            ]);
+        }
+
+        if (
             s.ground_truth &&
             s.ground_truth.latitude != null &&
             s.ground_truth.longitude != null
@@ -140,6 +163,7 @@ window.updateMap = function(sample, trajectoryData, currentIndex) {
     estimateGnssPreLine.setLatLngs(gnssPreCoords);
     estimateGnssPostLine.setLatLngs(gnssPostCoords);
     estimateDrLine.setLatLngs(drEstimateCoords);
+    if (estimateMlLine) estimateMlLine.setLatLngs(mlEstimateCoords);
     groundTruthLine.setLatLngs(groundTruthCoords);
 
     if (
