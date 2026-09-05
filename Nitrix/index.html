@@ -67,23 +67,41 @@
 
                 <div id="map"></div>
 
-                <!-- LEGEND -->
-                <div class="trajectory-legend">
-                    <div class="legend-item">
-                        <span class="legend-line estimate-gnss"></span>
-                        Estimate — GNSS active
+                <!-- HIGH-TECH MAP LEGEND OVERLAY ELEMENT -->
+                <div class="map-legend-overlay">
+                    <div class="legend-header">
+                        <span class="legend-icon">🧭</span>
+                        <span class="legend-title">TRAJECTORY MAP LEGEND</span>
                     </div>
-                    <div class="legend-item">
-                        <span class="legend-line estimate-dr"></span>
-                        Estimate — Dead reckoning
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-line estimate-ml"></span>
-                        Estimate — PyTorch LSTM Model
-                    </div>
-                    <div class="legend-item">
-                        <span class="legend-line ground-truth"></span>
-                        Ground truth
+                    <div class="legend-grid">
+                        <div class="legend-item">
+                            <span class="legend-badge gnss"></span>
+                            <div class="legend-text">
+                                <span class="label">🟦 GNSS Active</span>
+                                <span class="sub">Normal GPS Signal</span>
+                            </div>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge dr"></span>
+                            <div class="legend-text">
+                                <span class="label">🟥 Dead Reckoning</span>
+                                <span class="sub">UKF Physics Baseline</span>
+                            </div>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge ml"></span>
+                            <div class="legend-text">
+                                <span class="label">🟪 PyTorch LSTM</span>
+                                <span class="sub">Trained AI Model</span>
+                            </div>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-badge gt"></span>
+                            <div class="legend-text">
+                                <span class="label">🟩 Ground Truth</span>
+                                <span class="sub">True Reference Path</span>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </section>
