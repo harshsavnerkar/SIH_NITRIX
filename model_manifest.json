@@ -1,0 +1,11 @@
+{
+  "spec_version": 2,
+  "spec_sha256": "063703d0fd897b5280b2c64257dad28fea6743dc03ac05b9ab62f175a6ed42bd",
+  "model_sha256": "7566d8cd68a7b61881462495290b543f0c1cb362d6b50213b4a87de76e6e2de4",
+  "scaler_sha256": "d3e5824e76ea9e3678c9aba7fdfd600cfffc3de00feb47a9837f6dc4ac7b2421",
+  "scaler_spec_version": 2,
+  "gravity_alpha": 0.02,
+  "params": 460136,
+  "quant": "fp16",
+  "tflite_diff": "max_abs_diff: 0.00000668"
+}
