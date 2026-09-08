@@ -2,7 +2,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
-**ISRO • Software • SIH26168 • Deadline: 20 Sep 2026**
+**ISRO • Software • SIH26168**
 
 ## Clone and Use (30 seconds)
 
