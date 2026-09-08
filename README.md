@@ -9,8 +9,8 @@
 **Just want the app? No build needed:**
 
 ```bash
-git clone <your-repo-url>
-cd sih26168
+git clone https://github.com/harshsavnerkar/SIH_NITRIX.git
+cd SIH_NITRIX
 adb install releases/sih26168-debug.apk   # or drag the APK to your phone
 # Open Navigation on phone → grant Location → map centers on you
 ```
@@ -20,8 +20,8 @@ The APK (`releases/sih26168-debug.apk` 66M, also at `android/app/build/`) alread
 **Build from source:**
 
 ```bash
-git clone <your-repo-url>
-cd sih26168
+git clone https://github.com/harshsavnerkar/SIH_NITRIX.git
+cd SIH_NITRIX
 # Android: open android/ in Android Studio Hedgehog (JDK 17) → Run
 # Python (optional, to retrain): see "Run it" below
 ```
