@@ -23,6 +23,13 @@ class AlignmentEngine {
     /** Current estimated heading yaw in radians (GNSS-blended or gyro-integrated during blackout). */
     val currentYaw: Double get() = yawGnss ?: integratedYawInternal
 
+    /** Magnetic field magnitude in µT (Microtesla) for anomaly rejection. */
+    var lastMagNorm: Double = 48.0; private set
+
+    fun updateMag(bx: Double, by: Double, bz: Double) {
+        lastMagNorm = kotlin.math.sqrt(bx * bx + by * by + bz * bz)
+    }
+
     /** Call when GNSS is lost to switch currentYaw to gyro-integrated heading. */
     fun onGnssLost() {
         yawGnss = null

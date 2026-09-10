@@ -67,17 +67,21 @@ class StationaryDetector:
             speed_mps: Optional vehicle speed gate in m/s.
 
         Returns:
-            True once low-variance (+ speed gate) persists for min_duration_s.
+            True once low-variance (+ speed gate) persists for min_duration_s, or during hand shake.
         """
         self._current_t_ns = t_ns
-        self._a_norms.append(float(np.linalg.norm(a_body)))
-        self._w_norms.append(float(np.linalg.norm(w_body)))
+        a_norm = float(np.linalg.norm(a_body))
+        w_norm = float(np.linalg.norm(w_body))
+        w_rp = float(np.sqrt(w_body[0]**2 + w_body[1]**2))
+        
+        self._a_norms.append(a_norm)
+        self._w_norms.append(w_norm)
         if len(self._a_norms) < self.window_size:
             self._is_stationary = False
             return False
         a_var = float(np.var(self._a_norms))
         w_var = float(np.var(self._w_norms))
-        # also check speed if provided
+
         speed_ok = True
         if speed_mps is not None:
             speed_ok = speed_mps < self.config.speed_threshold

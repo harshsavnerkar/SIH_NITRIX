@@ -2,135 +2,609 @@
 <androidx.coordinatorlayout.widget.CoordinatorLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?android:colorBackground">
 
+    <!-- Background Map View (Shared across Live Drive & Post-Drive Summary) -->
     <org.maplibre.android.maps.MapView
         android:id="@+id/mapView"
         android:layout_width="match_parent"
         android:layout_height="match_parent" />
 
-    <!-- Status chip, top-left — white pill with purple outline -->
-    <TextView
-        android:id="@+id/statusChip"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="40dp"
-        android:layout_marginStart="16dp"
-        android:paddingHorizontal="16dp"
-        android:paddingVertical="8dp"
-        android:background="@drawable/bg_status_chip"
-        android:text="@string/mode_gnss"
-        android:textAppearance="?attr/textAppearanceLabelLarge"
-        android:textStyle="bold"
-        android:textColor="?attr/colorPrimary"
-        android:elevation="6dp" />
-
-    <!-- Recenter + follow FAB — separate button, left of locate, same row -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btnRecenter"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="92dp"
-        android:layout_marginBottom="124dp"
-        android:contentDescription="@string/recenter"
-        android:src="@android:drawable/ic_menu_compass"
-        app:fabSize="mini"
-        app:tint="?attr/colorPrimary"
-        app:backgroundTint="?attr/colorSurface"
-        android:elevation="6dp" />
-
-    <!-- Locate FAB, anchored above bottom sheet so never covered -->
-    <com.google.android.material.floatingactionbutton.FloatingActionButton
-        android:id="@+id/btnLocate"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom|end"
-        android:layout_marginEnd="16dp"
-        android:layout_marginBottom="120dp"
-        android:contentDescription="@string/locate"
-        android:src="@android:drawable/ic_menu_mylocation"
-        app:tint="?attr/colorOnPrimary"
-        app:backgroundTint="?attr/colorPrimary"
-        android:elevation="8dp" />
-
-    <!-- Bottom sheet — vibrant gradient, rounded top, speed hero stat -->
-    <LinearLayout
-        android:id="@+id/bottomSheet"
+    <!-- SCREEN 1: Live Drive Overlays Container -->
+    <RelativeLayout
+        android:id="@+id/liveDriveContainer"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_gravity="bottom"
-        android:background="@drawable/bg_bottom_sheet"
-        android:elevation="12dp"
-        android:orientation="vertical"
-        android:paddingHorizontal="24dp"
-        android:paddingTop="18dp"
-        android:paddingBottom="28dp">
+        android:layout_height="match_parent"
+        android:visibility="visible">
 
-        <!-- Drag-handle affordance -->
-        <View
-            android:layout_width="36dp"
-            android:layout_height="4dp"
-            android:layout_gravity="center_horizontal"
-            android:layout_marginBottom="14dp"
-            android:background="#55FFFFFF" />
-
-        <!-- Hero: speed big + drift chip beside it -->
+        <!-- Top Control Bar Container -->
         <LinearLayout
+            android:id="@+id/topBar"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="36dp">
+
+            <!-- Title & Mode Toggle Group -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/appTitle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="NitrixNav"
+                    android:textAppearance="?attr/textAppearanceTitleLarge"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorPrimary"
+                    android:layout_marginEnd="12dp"/>
+
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    app:cardCornerRadius="20dp"
+                    app:cardElevation="4dp"
+                    app:strokeWidth="0dp"
+                    app:cardBackgroundColor="?attr/colorSurface">
+
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/modeToggleGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:padding="2dp"
+                        app:singleSelection="true"
+                        app:selectionRequired="true"
+                        app:checkedButton="@id/btnModeGnssIns">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModeGnssIns"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="36dp"
+                            android:paddingHorizontal="4dp"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:text="GNSS + INS"
+                            app:icon="@drawable/ic_satellite"
+                            app:iconSize="14dp"
+                            app:cornerRadius="16dp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModeInsOnly"
+                            style="@style/Widget.Material3.Button.TonalButton"
+                            android:layout_width="0dp"
+                            android:layout_weight="1"
+                            android:layout_height="36dp"
+                            android:paddingHorizontal="4dp"
+                            android:textSize="11sp"
+                            android:textStyle="bold"
+                            android:text="INS only"
+                            app:icon="@drawable/ic_compass"
+                            app:iconSize="14dp"
+                            app:cornerRadius="16dp" />
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Sub-Header Info Chips & Record Button Row -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:layout_marginTop="8dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/chipMount"
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_chip_success"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="5dp"
+                    android:text="Auto-Aligned: Active"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textColor="#146C2E"
+                    android:textStyle="bold"
+                    android:drawableStart="@drawable/ic_phone"
+                    android:drawablePadding="4dp"
+                    app:drawableTint="#146C2E" />
+
+                <TextView
+                    android:id="@+id/chipLean"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="6dp"
+                    android:background="@drawable/bg_status_chip"
+                    android:paddingHorizontal="8dp"
+                    android:paddingVertical="5dp"
+                    android:text="Lean 0°"
+                    android:textAppearance="?attr/textAppearanceLabelMedium"
+                    android:textColor="?attr/colorOnSurfaceVariant"
+                    android:drawableStart="@drawable/ic_angle"
+                    android:drawablePadding="4dp"
+                    app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+                <!-- Record Trip Button -->
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/btnRecordTrip"
+                    style="@style/Widget.Material3.Button.TonalButton"
+                    android:layout_width="wrap_content"
+                    android:layout_height="32dp"
+                    android:layout_marginStart="6dp"
+                    android:paddingHorizontal="10dp"
+                    android:paddingVertical="0dp"
+                    android:text="Record"
+                    android:textSize="11sp"
+                    android:textStyle="bold"
+                    app:icon="@drawable/ic_record"
+                    app:iconSize="12dp"
+                    app:iconTint="#E53935"
+                    app:cornerRadius="14dp" />
+            </LinearLayout>
+        </LinearLayout>
+
+        <!-- Floating Map Status Badges -->
+        <TextView
+            android:id="@+id/gnssStatusBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/topBar"
+            android:layout_alignParentStart="true"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_chip_warning"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:text="GNSS lost — DR active"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textStyle="bold"
+            android:textColor="#E65100"
+            android:elevation="6dp" />
+
+        <TextView
+            android:id="@+id/snapStatusBadge"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_below="@id/topBar"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="16dp"
+            android:layout_marginTop="8dp"
+            android:background="@drawable/bg_status_chip"
+            android:paddingHorizontal="10dp"
+            android:paddingVertical="5dp"
+            android:text="Snap: on"
+            android:textAppearance="?attr/textAppearanceLabelSmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:elevation="6dp"
+            android:drawableStart="@drawable/ic_road"
+            android:drawablePadding="4dp"
+            app:drawableTint="?attr/colorOnSurfaceVariant" />
+
+        <!-- Floating Recenter + Locate Action Buttons -->
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_above="@id/liveBottomSheet"
+            android:layout_alignParentEnd="true"
+            android:layout_marginEnd="16dp"
+            android:layout_marginBottom="12dp"
             android:orientation="horizontal"
             android:gravity="center_vertical">
 
-            <TextView
-                android:id="@+id/sheetSummary"
-                android:layout_width="0dp"
-                android:layout_weight="1"
-                android:layout_height="wrap_content"
-                android:text="@string/speed_placeholder"
-                android:textAppearance="?attr/textAppearanceDisplaySmall"
-                android:textStyle="bold"
-                android:textColor="@color/onPrimary" />
-
-            <TextView
-                android:id="@+id/driftChip"
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnRecenter"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="12dp"
-                android:paddingVertical="6dp"
-                android:background="@drawable/bg_speed_chip"
-                android:textAppearance="?attr/textAppearanceLabelMedium"
-                android:textStyle="bold"
-                android:textColor="@color/onPrimary" />
+                android:layout_marginEnd="8dp"
+                android:contentDescription="@string/recenter"
+                android:src="@android:drawable/ic_menu_compass"
+                app:fabSize="mini"
+                app:tint="?attr/colorPrimary"
+                app:backgroundTint="?attr/colorSurface"
+                android:elevation="6dp" />
+
+            <com.google.android.material.floatingactionbutton.FloatingActionButton
+                android:id="@+id/btnLocate"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:contentDescription="@string/locate"
+                android:src="@android:drawable/ic_menu_mylocation"
+                app:tint="?attr/colorOnPrimary"
+                app:backgroundTint="?attr/colorPrimary"
+                android:elevation="6dp" />
         </LinearLayout>
 
-        <!-- Detail stats card: translucent white on the gradient -->
-        <com.google.android.material.card.MaterialCardView
+        <!-- Live Drive Bottom Sheet Grid Cards -->
+        <LinearLayout
+            android:id="@+id/liveBottomSheet"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginTop="14dp"
-            app:cardBackgroundColor="#26FFFFFF"
-            app:cardCornerRadius="16dp"
-            app:cardElevation="0dp"
-            app:strokeWidth="0dp">
+            android:layout_alignParentBottom="true"
+            android:layout_marginBottom="60dp"
+            android:background="@drawable/bg_bottom_sheet"
+            android:elevation="12dp"
+            android:orientation="vertical"
+            android:paddingHorizontal="16dp"
+            android:paddingTop="14dp"
+            android:paddingBottom="14dp">
 
+            <!-- Drag Handle -->
+            <View
+                android:layout_width="36dp"
+                android:layout_height="4dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="10dp"
+                android:background="#55FFFFFF" />
+
+            <!-- Hero Metric Cards Grid (Speed in km/h & Drift Est.) -->
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:weightSum="2">
+
+                <!-- Hero Card 1: Speed -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="4dp"
+                    app:cardBackgroundColor="#26FFFFFF"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Speed"
+                            android:textAppearance="?attr/textAppearanceLabelMedium"
+                            android:textColor="#B3FFFFFF" />
+
+                        <TextView
+                            android:id="@+id/txtSpeedKmh"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0.0 km/h"
+                            android:textAppearance="?attr/textAppearanceTitleLarge"
+                            android:textStyle="bold"
+                            android:textColor="#FFFFFF" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+
+                <!-- Hero Card 2: Drift Est -->
+                <com.google.android.material.card.MaterialCardView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="4dp"
+                    app:cardBackgroundColor="#26FFFFFF"
+                    app:cardCornerRadius="16dp"
+                    app:cardElevation="0dp"
+                    app:strokeWidth="0dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical"
+                        android:padding="12dp">
+
+                        <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Drift est."
+                            android:textAppearance="?attr/textAppearanceLabelMedium"
+                            android:textColor="#B3FFFFFF" />
+
+                        <TextView
+                            android:id="@+id/txtDriftEst"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="1.8%"
+                            android:textAppearance="?attr/textAppearanceTitleLarge"
+                            android:textStyle="bold"
+                            android:textColor="#81C784" />
+                    </LinearLayout>
+                </com.google.android.material.card.MaterialCardView>
+            </LinearLayout>
+
+            <!-- Technical Detail Stats Line -->
             <TextView
                 android:id="@+id/sheetDetail"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:paddingHorizontal="14dp"
-                android:paddingVertical="10dp"
-                android:text="@string/speed_placeholder"
+                android:layout_marginTop="8dp"
+                android:paddingHorizontal="8dp"
+                android:text="model 1.8 · σ0.89 · still false · meta 0ms"
                 android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="#E6FFFFFF"
-                android:lineSpacingExtra="3dp"
-                android:visibility="visible" />
-        </com.google.android.material.card.MaterialCardView>
-    </LinearLayout>
+                android:textColor="#CCCCCC" />
+        </LinearLayout>
+    </RelativeLayout>
 
-    <!-- Loading overlay — light gradient matching the vibrant theme -->
+    <!-- SCREEN 2: Post-Drive Summary Container (Overlay Sheet over Map) -->
+    <androidx.core.widget.NestedScrollView
+        android:id="@+id/tripSummaryContainer"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="bottom"
+        android:layout_marginBottom="60dp"
+        android:background="@drawable/bg_bottom_sheet"
+        android:elevation="12dp"
+        android:paddingHorizontal="16dp"
+        android:paddingTop="12dp"
+        android:paddingBottom="20dp"
+        android:visibility="gone">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+
+            <!-- Drag Handle Bar -->
+            <View
+                android:layout_width="36dp"
+                android:layout_height="4dp"
+                android:layout_gravity="center_horizontal"
+                android:layout_marginBottom="10dp"
+                android:background="#CCCCCC" />
+
+        <!-- Top Bar: Trip report & Share -->
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Trip report"
+                android:textAppearance="?attr/textAppearanceTitleLarge"
+                android:textStyle="bold"
+                android:textColor="?attr/colorOnBackground" />
+
+            <ImageView
+                android:id="@+id/btnShare"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:layout_alignParentEnd="true"
+                android:layout_centerVertical="true"
+                android:src="@drawable/ic_share"
+                app:tint="?attr/colorPrimary" />
+        </RelativeLayout>
+
+        <!-- Subheader: Ground truth vs estimated path -->
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Ground truth vs estimated path"
+            android:textAppearance="?attr/textAppearanceTitleSmall"
+            android:textColor="?attr/colorOnSurfaceVariant"
+            android:layout_marginBottom="8dp" />
+
+        <!-- Route Legend Strip Card -->
+        <com.google.android.material.card.MaterialCardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="12dp"
+            app:cardCornerRadius="12dp"
+            app:cardElevation="1dp"
+            app:strokeWidth="1dp"
+            app:strokeColor="#E0E0E0"
+            app:cardBackgroundColor="?attr/colorSurface">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:padding="12dp"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_weight="1"
+                    android:layout_height="wrap_content"
+                    android:text="🔵 GNSS (Blue)   🔴 DR Path (Red)"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="?attr/colorOnSurface" />
+
+                <TextView
+                    android:id="@+id/txtOutageSummary"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="98.0% Accuracy"
+                    android:textSize="12sp"
+                    android:textStyle="bold"
+                    android:textColor="#2E7D32" />
+            </LinearLayout>
+        </com.google.android.material.card.MaterialCardView>
+
+        <!-- 4 Grid Metrics Cards (Avg Speed, Total Dist, Outage Time, Fusion Mode) -->
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:columnCount="2"
+            android:rowCount="2"
+            android:layout_marginTop="12dp">
+
+            <!-- Card 1: Avg Speed -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_columnWeight="1"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="1dp"
+                app:cardBackgroundColor="?attr/colorSurface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Avg. speed"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/txtSummaryAvgSpeed"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0.0 km/h"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Card 2: Total Dist -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_columnWeight="1"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="1dp"
+                app:cardBackgroundColor="?attr/colorSurface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Total dist."
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/txtSummaryDistance"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0.00 km"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Card 3: Outage time -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_columnWeight="1"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="1dp"
+                app:cardBackgroundColor="?attr/colorSurface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Outage time"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/txtSummaryOutage"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="0 s"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <!-- Card 4: Fusion mode -->
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="0dp"
+                android:layout_columnWeight="1"
+                android:layout_height="wrap_content"
+                android:layout_margin="4dp"
+                app:cardCornerRadius="12dp"
+                app:cardElevation="1dp"
+                app:cardBackgroundColor="?attr/colorSurface">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="12dp">
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="Fusion mode"
+                        android:textSize="11sp"
+                        android:textColor="?attr/colorOnSurfaceVariant" />
+
+                    <TextView
+                        android:id="@+id/txtSummaryMode"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="AI + InEKF"
+                        android:textSize="14sp"
+                        android:textStyle="bold"
+                        android:textColor="?attr/colorOnSurface" />
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+        </GridLayout>
+
+        <!-- Download / Export Trip Details Button -->
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btnDownloadDetails"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="16dp"
+            android:text="Download trip details"
+            android:textStyle="bold"
+            app:cornerRadius="12dp"
+            app:icon="@drawable/ic_download"
+            app:iconGravity="textStart" />
+        </LinearLayout>
+    </androidx.core.widget.NestedScrollView>
+
+    <!-- Bottom Navigation Bar (3 Tabs: Map / Summary / Settings) -->
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="match_parent"
+        android:layout_height="60dp"
+        android:layout_gravity="bottom"
+        android:background="?attr/colorSurface"
+        android:elevation="16dp"
+        app:menu="@menu/bottom_nav_menu" />
+
+    <!-- Loading Overlay -->
     <FrameLayout
         android:id="@+id/loadingOverlay"
         android:layout_width="match_parent"
@@ -138,7 +612,7 @@
         android:background="@drawable/bg_loading"
         android:clickable="true"
         android:focusable="true"
-        android:elevation="16dp">
+        android:elevation="20dp">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -164,14 +638,6 @@
                 android:text="Getting location…"
                 android:textAppearance="?attr/textAppearanceTitleMedium"
                 android:textColor="@color/onBackground" />
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="4dp"
-                android:text="Starting sensors &amp; map"
-                android:textAppearance="?attr/textAppearanceBodyMedium"
-                android:textColor="@color/onSurfaceVariant" />
         </LinearLayout>
     </FrameLayout>
 </androidx.coordinatorlayout.widget.CoordinatorLayout>

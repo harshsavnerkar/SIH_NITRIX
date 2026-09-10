@@ -61,6 +61,10 @@ class InEKFEngine(useGravity: Boolean = true) {
         v = doubleArrayOf(vfwd, 0.0, 0.0)
     }
 
+    fun zeroVelocity() {
+        v[0] = 0.0; v[1] = 0.0; v[2] = 0.0
+    }
+
     /** Port of filter_propagate_improved. gyro/acc = raw body-frame measurement. */
     fun propagate(gyro: DoubleArray, acc: DoubleArray, dt: Double) {
         val w = doubleArrayOf(gyro[0] - bg[0], gyro[1] - bg[1], gyro[2] - bg[2])
@@ -69,12 +73,20 @@ class InEKFEngine(useGravity: Boolean = true) {
         val a = doubleArrayOf(acc[0] - ba[0], acc[1] - ba[1], acc[2] - ba[2])
         val aBody = LieGroup.matVec(R, a)
         val aNav = doubleArrayOf(aBody[0] + g[0], aBody[1] + g[1], aBody[2] + g[2])
+        val vMag = LieGroup.norm(v)
         val vprop = doubleArrayOf(v[0] + aNav[0] * dt, v[1] + aNav[1] * dt, v[2] + aNav[2] * dt)
-        val pprop = doubleArrayOf(
-            p[0] + (v[0] + vprop[0]) * dt * 0.5,
-            p[1] + (v[1] + vprop[1]) * dt * 0.5,
-            p[2] + (v[2] + vprop[2]) * dt * 0.5,
-        )
+
+        // Position propagation: if stationary/sub-deadband (vMag < 0.15), freeze position p.
+        // If moving, bound position step per sample dt to physical max displacement (1.5 * v * dt).
+        val pprop = if (vMag < 0.15) {
+            p.copyOf()
+        } else {
+            val maxStep = 1.5 * vMag * dt + 0.05
+            val dx = ((v[0] + vprop[0]) * dt * 0.5).coerceIn(-maxStep, maxStep)
+            val dy = ((v[1] + vprop[1]) * dt * 0.5).coerceIn(-maxStep, maxStep)
+            val dz = ((v[2] + vprop[2]) * dt * 0.5).coerceIn(-maxStep, maxStep)
+            doubleArrayOf(p[0] + dx, p[1] + dy, p[2] + dz)
+        }
 
         // F Jacobian (21x21, only non-zero blocks built into flat ops)
         val F = Array(DIM) { DoubleArray(DIM) }

@@ -12,7 +12,7 @@
 git clone https://github.com/harshsavnerkar/SIH_NITRIX.git
 cd SIH_NITRIX
 adb install releases/sih26168-debug.apk   # or drag the APK to your phone
-# Open Navigation on phone → grant Location → map centers on you
+# Open NitrixNav on phone → grant Location → map centers on you
 ```
 
 The APK (`releases/sih26168-debug.apk` 66M, also at `android/app/build/`) already contains the trained `model.tflite` + `scaler.json`. No Python, no training needed to try it.

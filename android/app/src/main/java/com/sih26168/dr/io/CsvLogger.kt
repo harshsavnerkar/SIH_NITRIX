@@ -18,7 +18,13 @@ class CsvLogger(context: Context) {
     private val dir: File = context.getExternalFilesDir(Environment.DIRECTORY_DOCUMENTS)
         ?: context.filesDir
     private var file: File? = null
+    val activeFile: File? get() = file ?: getLatestLogFile()
     var enabled = false
+
+    fun getLatestLogFile(): File? {
+        return dir.listFiles { f -> f.name.startsWith("dr_log_") && f.name.endsWith(".csv") }
+            ?.maxByOrNull { it.lastModified() }
+    }
 
     /**
      * Start a new log file.

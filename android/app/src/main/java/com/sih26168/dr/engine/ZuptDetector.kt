@@ -25,8 +25,11 @@ class ZuptDetector(
     private val gyroNorms = ArrayDeque<Double>(windowSize)
     private var candidateStartS: Double? = null
     private var nowS = 0.0
+    private var lastANorm = 9.80665
     /** Latest stationary decision. */
     var isStationary = false; private set
+    /** Latest hand shake / phone handling detection decision. */
+    var isHandShake = false; private set
 
     /**
      * Feed one raw IMU sample.
@@ -39,18 +42,35 @@ class ZuptDetector(
      */
     fun update(aBody: DoubleArray, wBody: DoubleArray, dt: Double, speed: Double?): Boolean {
         nowS += dt
-        accNorms.addLast(LieGroup.norm(aBody))
-        gyroNorms.addLast(LieGroup.norm(wBody))
+        val aNorm = LieGroup.norm(aBody)
+        val wNorm = LieGroup.norm(wBody)
+        val wRollPitch = kotlin.math.sqrt(wBody[0] * wBody[0] + wBody[1] * wBody[1])
+        val dtEff = dt.coerceAtLeast(0.005)
+        val accJerk = kotlin.math.abs(aNorm - lastANorm) / dtEff
+        lastANorm = aNorm
+
+        accNorms.addLast(aNorm)
+        gyroNorms.addLast(wNorm)
         if (accNorms.size > windowSize) accNorms.removeFirst()
         if (gyroNorms.size > windowSize) gyroNorms.removeFirst()
-        if (accNorms.size < windowSize) { isStationary = false; return false }
+        if (accNorms.size < windowSize) {
+            isStationary = false
+            isHandShake = false
+            return false
+        }
         val aVar = variance(accNorms)
         val wVar = variance(gyroNorms)
+
+        // Hand shake / phone handling: high angular velocity norm (>0.65 rad/s ~ 37°/s),
+        // high out-of-plane roll/pitch rotation (>0.45 rad/s), high 3D gyro variance (>0.08),
+        // or extreme acceleration jerk (>25 m/s³).
+        isHandShake = (wNorm > 0.65 || wRollPitch > 0.45 || wVar > 0.08 || accJerk > 25.0)
+
         val speedOk = speed == null || speed < speedThresh
-        if (aVar < accVarThresh && wVar < gyroVarThresh && speedOk) {
+        if ((aVar < accVarThresh && wVar < gyroVarThresh && speedOk) || isHandShake) {
             // Elvis both assigns and yields a non-null start — no `!!` needed.
             val start = candidateStartS ?: nowS.also { candidateStartS = it }
-            isStationary = (nowS - start) >= minDurationS
+            isStationary = (nowS - start) >= minDurationS || isHandShake
         } else {
             candidateStartS = null
             isStationary = false

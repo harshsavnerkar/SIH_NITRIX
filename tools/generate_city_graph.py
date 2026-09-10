@@ -2,7 +2,7 @@
 import json
 from pathlib import Path
 
-# Generate a rich road graph network around Barave Road / Kalyan / Pune
+# Generate a rich road graph network around Agra Road / Barave Road / Kalyan / Pune
 # with main corridors, arterial roads, cross streets, and intersections.
 
 nodes_lat = []
@@ -17,43 +17,45 @@ def add_node(lat, lon):
 def add_edge(u, v):
     edges.append([u, v])
 
-# Corridor 1: Barave Road Main Corridor (West to East)
+# Corridor 1: Agra Road / Barave Road Kalyan Corridor (South-West to North-East)
 c1_nodes = []
-base_lat, base_lon = 19.2420, 73.1300
-for i in range(25):
+base_lat, base_lon = 19.2400, 73.1340
+for i in range(40):
     lat = base_lat + i * 0.00015
-    lon = base_lon + i * 0.00040
+    lon = base_lon + i * 0.00012
     c1_nodes.append(add_node(lat, lon))
 
 for i in range(len(c1_nodes) - 1):
     add_edge(c1_nodes[i], c1_nodes[i+1])
 
-# Corridor 2: North-South Arterial Avenue
+# Corridor 2: Swanand Nagar Road / Kala Talao Road (North-South Arterial)
 c2_nodes = []
-base_lat, base_lon = 19.2400, 73.1350
-for i in range(20):
-    lat = base_lat + i * 0.00030
-    lon = base_lon + i * 0.00005
+base_lat, base_lon = 19.2410, 73.1365
+for i in range(35):
+    lat = base_lat + i * 0.00018
+    lon = base_lon + i * 0.00008
     c2_nodes.append(add_node(lat, lon))
 
 for i in range(len(c2_nodes) - 1):
     add_edge(c2_nodes[i], c2_nodes[i+1])
 
-# Corridor 3: Parallel Bypass Highway
+# Corridor 3: Parallel West Bypass
 c3_nodes = []
-base_lat, base_lon = 19.2410, 73.1280
-for i in range(22):
-    lat = base_lat + i * 0.00020
-    lon = base_lon + i * 0.00045
+base_lat, base_lon = 19.2405, 73.1320
+for i in range(35):
+    lat = base_lat + i * 0.00016
+    lon = base_lon + i * 0.00014
     c3_nodes.append(add_node(lat, lon))
 
 for i in range(len(c3_nodes) - 1):
     add_edge(c3_nodes[i], c3_nodes[i+1])
 
-# Cross streets connecting Corridor 1, 2, and 3
-for i in range(0, 20, 4):
-    add_edge(c1_nodes[i], c2_nodes[min(i, len(c2_nodes)-1)])
-    add_edge(c1_nodes[i], c3_nodes[min(i, len(c3_nodes)-1)])
+# Cross streets connecting Agra Road, Swanand Nagar Road, and West Bypass
+for i in range(0, 32, 4):
+    if i < len(c1_nodes) and i < len(c2_nodes):
+        add_edge(c1_nodes[i], c2_nodes[i])
+    if i < len(c1_nodes) and i < len(c3_nodes):
+        add_edge(c1_nodes[i], c3_nodes[i])
 
 # Additional Pune central network
 p_base_lat, p_base_lon = 18.5200, 73.8500

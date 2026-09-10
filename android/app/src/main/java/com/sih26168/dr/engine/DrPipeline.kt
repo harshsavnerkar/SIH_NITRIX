@@ -30,6 +30,9 @@ class DrPipeline(context: Context, useGravity: Boolean = true) {
     private var roadGraph: RoadGraph? = null
     private var matcher: HmmMapMatcher? = null
 
+    /** Toggle: when true, GNSS updates are ignored and mode is locked to pure INS Dead Reckoning. */
+    var forceInsOnly: Boolean = false
+
     /** Current fusion state (sealed — consume with exhaustive `when`). */
     var mode: SeamlessHandler.FusionMode = SeamlessHandler.FusionMode.GnssAided(trust = 1.0)
         private set
@@ -92,9 +95,10 @@ class DrPipeline(context: Context, useGravity: Boolean = true) {
 
     /** Called when a live GNSS fix arrives — fuses position into InEKF with scaled covariance. */
     fun onGnssFix(fixLat: Double, fixLon: Double, accuracyMeters: Double) {
+        if (forceInsOnly) return
         val nowMs = (engineS * 1000.0).toLong()
         seamless.onFix(nowMs)
-        if (!refSet) {
+        if (!refSet || accuracyMeters <= 15.0) {
             refLat = fixLat
             refLon = fixLon
             refSet = true
@@ -143,14 +147,18 @@ class DrPipeline(context: Context, useGravity: Boolean = true) {
             accVeh[1] - vehicleG[1],
             accVeh[2] - vehicleG[2],
         )
-        // 100 Hz ZUPT stationary detection on every IMU sample
+        // 100 Hz ZUPT stationary & hand-shake detection on every IMU sample
         val still = zupt.update(accVeh, gyroVeh, dt, null)
-        lastStill = still
+        val isHandShake = zupt.isHandShake
+        lastStill = still || isHandShake
 
-        // 100 Hz InEKF state propagation on every IMU sample (only when moving)
-        if (!still) {
+        // 100 Hz InEKF state propagation on every IMU sample (ONLY when vehicle is actually moving)
+        val isMoving = lastV > V_DEADBAND && !still && !isHandShake
+        if (isMoving) {
             ekf.propagate(gyroVeh, linAccVeh, dt)
             updateLatLonFromEkf()
+        } else {
+            ekf.zeroVelocity()
         }
 
         if (avnet.push(norm)) {
@@ -158,17 +166,21 @@ class DrPipeline(context: Context, useGravity: Boolean = true) {
             lastRawModelV = rawV
 
             // Motion confirmation: model must report speed above deadband for a few
-            // consecutive ticks before trusting it (kills table nudges & spikes).
-            if (still || rawV < V_DEADBAND) {
+            // consecutive ticks before trusting it (kills table nudges, hand shaking & spikes).
+            if (still || isHandShake || rawV < V_DEADBAND) {
                 motionConfirmMs = 0.0
-                if (still) zuptHoldMsRem = ZUPT_HOLD_MS
+                if (still || isHandShake) {
+                    zuptHoldMsRem = ZUPT_HOLD_MS
+                    lastModelV = 0.0
+                    velSmooth = 0.0
+                }
             } else if (motionConfirmMs < MOTION_CONFIRM_MS) {
                 motionConfirmMs += 100.0
             }
             val gnssGateActive = gnssStillLatched && engineS * 1000.0 < gnssStillDeadlineMs
             if (gnssGateActive) motionConfirmMs = 0.0
             if (!gnssGateActive) gnssStillLatched = false
-            val trustModel = motionConfirmMs >= MOTION_CONFIRM_MS && zuptHoldMsRem <= 0.0 && !gnssGateActive
+            val trustModel = motionConfirmMs >= MOTION_CONFIRM_MS && zuptHoldMsRem <= 0.0 && !gnssGateActive && !isHandShake
 
             val vSourced = if (trustModel) rawV else 0.0
 
@@ -181,7 +193,7 @@ class DrPipeline(context: Context, useGravity: Boolean = true) {
 
             if (zuptHoldMsRem > 0.0) zuptHoldMsRem -= 100.0
 
-            val v = if (velSmooth > V_DEADBAND) velSmooth else 0.0
+            val v = if (velSmooth > V_DEADBAND && !still && !isHandShake) velSmooth else 0.0
             val vLatRaw = lean.nhc(v, lean.pBike > 0.5).first
             val moving = v > 0.0
             val rFwd = if (!moving) 0.05 * 0.05 else max(avnet.sigmaV.toDouble(), 0.3).let { it * it }
@@ -195,6 +207,11 @@ class DrPipeline(context: Context, useGravity: Boolean = true) {
 
     /** 10Hz fusion tick: propagate + velocity/NHC/ZUPT update. Returns v_fwd (ZUPT-corrected). */
     fun onFusionTick(dt: Double, gnssSpeed: Double?, gnssCourseRad: Double?): Double {
+        if (forceInsOnly) {
+            mode = SeamlessHandler.FusionMode.DeadReckoning
+            alignment.onGnssLost()
+            return lastV
+        }
         mode = seamless.tick((dt * 1000).toInt())
         if (mode is SeamlessHandler.FusionMode.DeadReckoning) {
             alignment.onGnssLost()
@@ -205,10 +222,28 @@ class DrPipeline(context: Context, useGravity: Boolean = true) {
 
     /** After ekf.updateVelocity, call to emit pose + map snap. */
     fun emitPose(gnssLat: Double?, gnssLon: Double?): Pair<Double, Double> {
-        matcher?.let { m ->
-            // Matcher expects heading in radians
-            val fix = m.update(lat, lon, alignment.currentYaw)
-            if (fix != null) { lastSnappedLat = fix.lat; lastSnappedLon = fix.lon }
+        val isMovingVehicle = lastV > V_DEADBAND && !lastStill
+        if (isMovingVehicle) {
+            matcher?.let { m ->
+                // Matcher expects heading in radians
+                val fix = m.update(lat, lon, alignment.currentYaw)
+                if (fix != null) {
+                    val d = RoadGraph.haversine(lat, lon, fix.lat, fix.lon)
+                    if (d <= 35.0) {
+                        lastSnappedLat = fix.lat
+                        lastSnappedLon = fix.lon
+                    } else {
+                        lastSnappedLat = 0.0
+                        lastSnappedLon = 0.0
+                    }
+                } else {
+                    lastSnappedLat = 0.0
+                    lastSnappedLon = 0.0
+                }
+            }
+        } else {
+            lastSnappedLat = 0.0
+            lastSnappedLon = 0.0
         }
         return Pair(lat, lon)
     }

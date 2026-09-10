@@ -1,5 +1,5 @@
 <resources>
-    <string name="app_name">Navigation</string>
+    <string name="app_name">NitrixNav</string>
     <string name="mode_gnss">GNSS</string>
     <string name="mode_ins">INS</string>
     <string name="mode_wait">Waiting for GPS</string>
