@@ -34,17 +34,26 @@ When you drive through a tunnel, an underpass, or into a basement parking lot, G
 
 This project uses the phone's motion sensors plus an AI model to predict how fast you're going, then fuses that with a map so the position error stays under 5% over 1 km. No car hardware, no OBD-II — just the phone.
 
-## How it works
+## How it works & Key Features
 
-1. Phone motion sensors (accelerometer + gyroscope) stream data at 100 Hz.
-2. A small AI model (**AVNetLite**, 460k parameters, <1 MB) reads 2-second windows of sensor data and predicts forward speed.
-3. A filter (**InEKF**) combines the AI speed prediction with raw sensor data, using two physics rules:
-   - **NHC** — a vehicle doesn't slide sideways or vertically.
-   - **ZUPT** — when stopped (detected by sensor variance), speed is exactly zero, which resets accumulated error.
-4. Position is snapped to the nearest road on an offline map (**HMM map matching** with OpenStreetMap).
-5. The model runs on the phone as a **TFLite** file (~1 MB, ~7 ms per inference).
+1. **High-Hz Sensor Pipeline**: Streams motion sensors (accel + gyro at 100 Hz; mag at 50 Hz).
+2. **Uncertainty-Aware AI Model**: **AVNetLite** (460k parameters, <1 MB) reads 2s windows and predicts forward speed $v_{ai}$ alongside learned uncertainty $\sigma_v$.
+3. **Exact Lie-Group Filter**: 21-DOF right-invariant filter on $SE_2(3)$ with exact $\Phi(F\Delta t)$ matrix exponential propagation:
+   - **Adaptive Lean & NHC**: Calculates roll angle $\phi$ for 2-wheelers ($v_{lat} = v_{fwd}\sin\phi$) and clamps lateral slide.
+   - **ZUPT Error Reset**: Zero-velocity detection ($\sigma_{acc} < 0.05 \text{ m/s}^2$) clamps velocity to 0 and resets bias accumulation.
+   - **Magnetic Anomaly Rejection**: Rejects local iron spikes outside Earth's $25\text{–}65\ \mu\text{T}$ field.
+4. **Map-Matching & Visualization**: Snaps poses to road geometries via HMM map matching on offline OpenStreetMap tiles.
+5. **Interactive Android UI & Reporting**:
+   - **Dual-Color Path**: Blue path (`#0B57D0`) for active GNSS track; Red path (`#E53935`) for Dead Reckoning outage path.
+   - **Red Outage Pins**: Automatic pin markers labeled `"Dead Reckoning path"` at GNSS blackout entry points.
+   - **Trip Recording & Export**: Tap `[Record]` to log 100 Hz sensor/pose streams; tap `[Download trip details]` to save directly into **`Downloads/NitrixNav/`** on phone via MediaStore; tap `[Share]` for system chooser.
+   - **Settings & Permissions Modal**: Inspect live magnetic field norm ($\mu\text{T}$), $SE_2(3)$ math specs, asset SHA-256 hashes, and open system permissions settings.
+6. **Standalone 200 Hz Edge Engine (CLI)**: Process external FOG/MEMS IMU CSV streams on embedded hardware:
+   ```bash
+   python python/edge_engine.py --imu data/sample_imu.csv --hz 200 --out reports/edge_engine_poses.csv
+   ```
 
-Covers all 6 required ISRO capabilities: sensor alignment, AI speed filter, map matching, GNSS+INS fusion, seamless GPS-loss handling, and UI.
+Covers all 6 mandatory ISRO capabilities: sensor auto-alignment, AI speed filter, map matching + NHC, GNSS+INS fusion, seamless deficit handling, and UI.
 
 ## Results
 
